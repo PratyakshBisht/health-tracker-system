@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  firstName String
+  lastName  String
+  dateOfBirth DateTime?
+  gender    String?
+  height    Float?     // in cm
+  
+  // Health metrics
+  healthMetrics HealthMetric[]
+  exercises     Exercise[]
+  sleepRecords  SleepRecord[]
+  waterIntakes  WaterIntake[]
+  meals         Meal[]
+  goals         Goal[]
+  reports       Report[]
+  
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  @@index([email])
+}
+
+model HealthMetric {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Metrics
+  weight    Float?   // in kg
+  bmi       Float?
+  heartRate Int?     // in bpm
+  systolic  Int?     // blood pressure
+  diastolic Int?     // blood pressure
+  calories  Int?
+  
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([recordedAt])
+}
+
+model Exercise {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      String   // e.g., "Running", "Cycling"
+  duration  Int      // in minutes
+  intensity String   // "Low", "Medium", "High"
+  calories  Int?
+  notes     String?
+  
+  startedAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([startedAt])
+}
+
+model SleepRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  duration  Int      // in minutes
+  quality   String   // "Poor", "Fair", "Good", "Excellent"
+  notes     String?
+  
+  recordedAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([recordedAt])
+}
+
+model WaterIntake {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount    Int      // in ml
+  notes     String?
+  
+  recordedAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([recordedAt])
+}
+
+model Meal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name      String
+  calories  Int
+  protein   Float?
+  carbs     Float?
+  fat       Float?
+  notes     String?
+  
+  recordedAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([recordedAt])
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  type      String   // "Weight", "Exercise", "Water", "Sleep", "Calories"
+  target    Float
+  current   Float    @default(0)
+  unit      String   // "kg", "minutes", "ml", "hours", "kcal"
+  status    String   @default("Active")  // "Active", "Completed", "Abandoned"
+  dueDate   DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      String   // "Daily", "Weekly", "Monthly"
+  data      Json     // Flexible JSON structure for report data
+  filePath  String?  // Path to PDF/CSV file
+  
+  generatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([generatedAt])
+}
